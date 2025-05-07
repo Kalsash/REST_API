@@ -111,39 +111,51 @@ namespace REST_API.Controllers
         // DELETE: api/People/5
         [Authorize(Roles = "admin")]
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeletePerson(long id)
+public async Task<IActionResult> DeletePerson(long id)
+{
+    if (_context.People == null)
+    {
+        return NotFound();
+    }
+
+    // Явно включаем поддержку внешних ключей для SQLite
+    await _context.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys = ON;");
+
+    using (var transaction = await _context.Database.BeginTransactionAsync())
+    {
+        try
         {
-            using (var transaction = await _context.Database.BeginTransactionAsync())
+            var person = await _context.People.FindAsync(id);
+            if (person == null)
             {
-                try
-                {
-                    // Удаляем MovieCasts через сырой SQL (без отслеживания)
-                    await _context.Database.ExecuteSqlRawAsync(
-                        "DELETE FROM movie_cast WHERE person_id = {0}", id);
-
-                    // Удаляем MovieCrews
-                    var movieCrews = await _context.MovieCrews
-                        .Where(x => x.PersonId == id)
-                        .ToListAsync();
-                    _context.MovieCrews.RemoveRange(movieCrews);
-
-                    // Удаляем саму персону
-                    var person = await _context.People.FindAsync(id);
-                    if (person == null) return NotFound();
-
-                    _context.People.Remove(person);
-                    await _context.SaveChangesAsync();
-                    await transaction.CommitAsync();
-
-                    return NoContent();
-                }
-                catch (Exception ex)
-                {
-                    await transaction.RollbackAsync();
-                    return StatusCode(500, $"Internal server error: {ex.Message}");
-                }
+                return NotFound();
             }
+
+            // Удаляем все связанные записи в MovieCrews
+            var movieCrews = await _context.MovieCrews
+                .Where(x => x.PersonId == id)
+                .ToListAsync();
+            _context.MovieCrews.RemoveRange(movieCrews);
+
+            // Удаляем все связанные записи в MovieCast
+            var movieCasts = await _context.MovieCasts
+                .Where(x => x.PersonId == id)
+                .ToListAsync();
+            _context.MovieCasts.RemoveRange(movieCasts);
+
+            _context.People.Remove(person);
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return NoContent();
         }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            return StatusCode(500, $"Internal server error: {ex.Message}");
+        }
+    }
+}
 
         private bool PersonExists(long id)
         {

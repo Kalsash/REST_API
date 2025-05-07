@@ -183,9 +183,10 @@ public partial class MoviesContext : DbContext
 
         modelBuilder.Entity<MovieCast>(entity =>
         {
-            entity
-                .HasNoKey()
-                .ToTable("movie_cast");
+            entity.ToTable("movie_cast");
+
+            // Добавляем составной первичный ключ
+            entity.HasKey(e => new { e.MovieId, e.PersonId, e.CastOrder });
 
             entity.Property(e => e.CastOrder)
                 .HasColumnType("INT")
