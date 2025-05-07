@@ -116,7 +116,7 @@ namespace REST_API.Controllers
         }
 
         // DELETE: api/Departments/5
-        [Authorize(Roles = "admin")]
+         [Authorize(Roles = "admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteDepartment(long id)
         {
@@ -124,17 +124,21 @@ namespace REST_API.Controllers
             {
                 return NotFound();
             }
+
             var department = await _context.Departments.FindAsync(id);
             if (department == null)
             {
                 return NotFound();
             }
-            var idMovieCrew = _context.MovieCrews.Where(x => x.MovieId == id);
-            _context.MovieCrews.RemoveRange(idMovieCrew);
+
+            // Удаляем все связанные записи в MovieCrews
+            var movieCrews = _context.MovieCrews.Where(x => x.DepartmentId == id);
+            _context.MovieCrews.RemoveRange(movieCrews);
+
             _context.Departments.Remove(department);
             await _context.SaveChangesAsync();
 
-            return Ok(NoContent());
+            return NoContent(); // 204 No Content - стандартный ответ для успешного удаления
         }
 
         private bool DepartmentExists(long id)

@@ -49,8 +49,18 @@ public partial class MoviesContext : DbContext
     public virtual DbSet<ProductionCountry> ProductionCountries { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlite("DataSource=Database\\\\movies.db;");
+    {
+        optionsBuilder.UseSqlite("DataSource=Database\\\\movies.db;");
+        optionsBuilder.UseSqlite(o =>
+        {
+            o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+            o.CommandTimeout((int)TimeSpan.FromMinutes(1).TotalSeconds);
+        });
+
+        // Явно включаем поддержку внешних ключей
+        SQLitePCL.Batteries.Init();
+        optionsBuilder.UseSqlite(o => o.UseRelationalNulls(true));
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -237,11 +247,12 @@ public partial class MoviesContext : DbContext
                 .HasColumnType("INT")
                 .HasColumnName("person_id");
 
-            entity.HasOne(d => d.Department).WithMany().HasForeignKey(d => d.DepartmentId);
+            entity.HasOne(d => d.Department).WithMany().HasForeignKey(d => d.DepartmentId).OnDelete(DeleteBehavior.Cascade);
 
-            entity.HasOne(d => d.Movie).WithMany().HasForeignKey(d => d.MovieId);
+            entity.HasOne(d => d.Movie).WithMany().HasForeignKey(d => d.MovieId).OnDelete(DeleteBehavior.Cascade);
 
-            entity.HasOne(d => d.Person).WithMany().HasForeignKey(d => d.PersonId);
+            entity.HasOne(d => d.Person).WithMany().HasForeignKey(d => d.PersonId).OnDelete(DeleteBehavior.Cascade);
+
         });
 
         modelBuilder.Entity<MovieGenre>(entity =>

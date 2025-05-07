@@ -113,21 +113,36 @@ namespace REST_API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeletePerson(long id)
         {
-            if (_context.People == null)
+            using (var transaction = await _context.Database.BeginTransactionAsync())
             {
-                return NotFound();
-            }
-            var person = await _context.People.FindAsync(id);
-            if (person == null)
-            {
-                return NotFound();
-            }
-            var MovieCrews = _context.MovieCrews.Where(x => x.MovieId == id);
-            _context.MovieCrews.RemoveRange(MovieCrews);
-            _context.People.Remove(person);
-            await _context.SaveChangesAsync();
+                try
+                {
+                    // Удаляем MovieCasts через сырой SQL (без отслеживания)
+                    await _context.Database.ExecuteSqlRawAsync(
+                        "DELETE FROM movie_cast WHERE person_id = {0}", id);
 
-            return Ok(NoContent());
+                    // Удаляем MovieCrews
+                    var movieCrews = await _context.MovieCrews
+                        .Where(x => x.PersonId == id)
+                        .ToListAsync();
+                    _context.MovieCrews.RemoveRange(movieCrews);
+
+                    // Удаляем саму персону
+                    var person = await _context.People.FindAsync(id);
+                    if (person == null) return NotFound();
+
+                    _context.People.Remove(person);
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    return NoContent();
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    return StatusCode(500, $"Internal server error: {ex.Message}");
+                }
+            }
         }
 
         private bool PersonExists(long id)
