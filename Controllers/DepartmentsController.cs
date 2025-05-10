@@ -23,7 +23,7 @@ namespace REST_API.Controllers
         }
 
         // GET: api/Departments
-        //[Authorize]
+       [Authorize]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Department>>> GetDepartments()
         {
@@ -54,7 +54,6 @@ namespace REST_API.Controllers
         }
 
         // PUT: api/Departments/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [Authorize(Roles = "admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutDepartment(long id, Department department)
@@ -116,7 +115,7 @@ namespace REST_API.Controllers
         }
 
         // DELETE: api/Departments/5
-         //[Authorize(Roles = "admin")]
+         [Authorize(Roles = "admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteDepartment(long id)
         {

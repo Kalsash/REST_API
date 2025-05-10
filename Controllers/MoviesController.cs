@@ -24,7 +24,7 @@ namespace REST_API.Controllers
         }
 
         // GET: api/<MoviesController>
-        //[Authorize]
+        [Authorize]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Movie>>> GetMovies()
         {
@@ -94,7 +94,7 @@ namespace REST_API.Controllers
         }
 
         // DELETE api/<MoviesController>/id
-        //[Authorize(Roles = "admin")]
+        [Authorize(Roles = "admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteMovie(long id)
         {

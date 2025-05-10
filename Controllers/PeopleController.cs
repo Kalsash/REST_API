@@ -23,7 +23,7 @@ namespace REST_API.Controllers
         }
 
         // GET: api/People
-       // [Authorize]
+       [Authorize]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Person>>> GetPeople()
         {
@@ -109,7 +109,7 @@ namespace REST_API.Controllers
         }
 
         // DELETE: api/People/5
-       // [Authorize(Roles = "admin")]
+       [Authorize(Roles = "admin")]
         [HttpDelete("{id}")]
 public async Task<IActionResult> DeletePerson(long id)
 {
@@ -118,7 +118,6 @@ public async Task<IActionResult> DeletePerson(long id)
         return NotFound();
     }
 
-    // Явно включаем поддержку внешних ключей для SQLite
     await _context.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys = ON;");
 
     using (var transaction = await _context.Database.BeginTransactionAsync())
