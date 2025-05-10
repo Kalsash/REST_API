@@ -23,7 +23,7 @@ namespace REST_API.Controllers
         }
 
         // GET: api/Departments
-        [Authorize]
+        //[Authorize]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Department>>> GetDepartments()
         {
@@ -116,7 +116,7 @@ namespace REST_API.Controllers
         }
 
         // DELETE: api/Departments/5
-         [Authorize(Roles = "admin")]
+         //[Authorize(Roles = "admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteDepartment(long id)
         {

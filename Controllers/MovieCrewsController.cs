@@ -24,7 +24,7 @@ namespace REST_API.Controllers
         }
 
         // GET: api/MovieCrews
-        [Authorize]
+       // [Authorize]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<MovieCrew>>> GetMovieCrews()
         {
@@ -32,7 +32,7 @@ namespace REST_API.Controllers
           {
               return NotFound();
           }
-            return Ok(await _context.MovieCrews.AsNoTracking().ToListAsync());
+            return Ok(await _context.MovieCrews.AsNoTracking().Take(1000).ToListAsync());
         }
 
         // GET: api/MovieCrews/5
@@ -91,7 +91,7 @@ namespace REST_API.Controllers
 
         // POST: api/MovieCrews
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [Authorize(Roles = "admin")]
+        //[Authorize(Roles = "admin")]
         [HttpPost]
         public async Task<ActionResult<MovieCrew>> PostMovieCrew(MovieCrew movieCrew)
         {
@@ -123,7 +123,7 @@ namespace REST_API.Controllers
         }
 
         // DELETE: api/MovieCrews/5
-        [Authorize(Roles="admin")]
+       // [Authorize(Roles="admin")]
         [HttpDelete("{movies_id}/{person_id}/{departament_id}")]
         public async Task<IActionResult> DeleteMovieCrew(long? movies_id, long? person_id, long? departament_id)
         {
@@ -139,9 +139,9 @@ namespace REST_API.Controllers
             }
 
             _context.MovieCrews.Remove(movieCrew);
-            await _context.Movies
-                .Where(m => m.MovieId == movieCrew.MovieId)
-                .ForEachAsync(m => _context.Movies.Remove(m));
+            //await _context.Movies
+            //    .Where(m => m.MovieId == movieCrew.MovieId)
+            //    .ForEachAsync(m => _context.Movies.Remove(m));
                
             await _context.SaveChangesAsync();
 

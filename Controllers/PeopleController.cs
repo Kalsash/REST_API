@@ -23,7 +23,7 @@ namespace REST_API.Controllers
         }
 
         // GET: api/People
-        [Authorize]
+       // [Authorize]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Person>>> GetPeople()
         {
@@ -31,7 +31,7 @@ namespace REST_API.Controllers
           {
               return NotFound();
           }
-            return Ok(await _context.People.AsNoTracking().ToListAsync());
+            return Ok(await _context.People.AsNoTracking().Take(1000).ToListAsync());
         }
 
         // GET: api/People/5
@@ -109,7 +109,7 @@ namespace REST_API.Controllers
         }
 
         // DELETE: api/People/5
-        [Authorize(Roles = "admin")]
+       // [Authorize(Roles = "admin")]
         [HttpDelete("{id}")]
 public async Task<IActionResult> DeletePerson(long id)
 {

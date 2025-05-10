@@ -24,11 +24,11 @@ namespace REST_API.Controllers
         }
 
         // GET: api/<MoviesController>
-        [Authorize]
+        //[Authorize]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Movie>>> GetMovies()
         {
-                return Ok(await _context.Movies.AsNoTracking().ToListAsync());
+                return Ok(await _context.Movies.AsNoTracking().Take(1000).ToListAsync());
         }
 
         // GET api/<MoviesController>/id
@@ -94,20 +94,55 @@ namespace REST_API.Controllers
         }
 
         // DELETE api/<MoviesController>/id
-        [Authorize(Roles = "admin")]
+        //[Authorize(Roles = "admin")]
         [HttpDelete("{id}")]
-        public async Task<ActionResult<Movie>> DeleteMovie(long id)
+        public async Task<IActionResult> DeleteMovie(long id)
         {
-            var movie = await _context.Movies.FindAsync(id);
-            if (movie == null)   
-                return NotFound();  
-            //for
-            var idMovieCrew = _context.MovieCrews.Where(x => x.MovieId == id);
-            _context.MovieCrews.RemoveRange(idMovieCrew);
-            _context.Movies.Remove(movie);
+            // Явно включаем поддержку внешних ключей
+            await _context.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys = ON;");
 
-            await _context.SaveChangesAsync(); 
-            return Ok(movie);
+            using (var transaction = await _context.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    var movie = await _context.Movies.FindAsync(id);
+                    if (movie == null)
+                    {
+                        return NotFound();
+                    }
+
+                    // Список всех таблиц, которые могут ссылаться на Movie
+                    var relatedTables = new Dictionary<string, string>
+            {
+                {"movie_crew", "movie_id"},
+                {"movie_cast", "movie_id"},
+                {"movie_company", "movie_id"},
+                {"movie_genres", "movie_id"},
+                {"movie_keywords", "movie_id"},
+                {"movie_languages", "movie_id"},
+                {"production_country", "movie_id"}
+            };
+
+                    // Удаляем данные из всех связанных таблиц
+                    foreach (var table in relatedTables)
+                    {
+                        await _context.Database.ExecuteSqlRawAsync(
+                            $"DELETE FROM {table.Key} WHERE {table.Value} = {id}");
+                    }
+
+                    // Удаляем сам фильм
+                    _context.Movies.Remove(movie);
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    return NoContent();
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    return StatusCode(500, $"Error deleting movie: {ex.Message}");
+                }
+            }
         }
 
         private bool MovieExists(long id) =>
