@@ -26,7 +26,7 @@ namespace REST_API
                 swagger.SwaggerDoc("v1", new OpenApiInfo
                 {
                     Version = "v1",
-                    Title = "Lab 8 Rest API + Auth",
+                    Title = "Lab 7 Rest API + Auth",
                     Description = "About Application"
                 });
                 // Set the comments path for the Swagger JSON and UI.
